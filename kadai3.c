@@ -70,8 +70,13 @@ int main(void) {
         int nextWindow = -1;
         for (int k = 0; k < M; k++) {
             if (windows[k] < nextFreeTime) {
-                nextFreeTime = windows[k]; // 最も早く空く窓口のサービス終了時刻
-                nextWindow = k; // 最も早く空く窓口のインデックス
+                if(windows[k] != 0.0){
+                    nextFreeTime = windows[k]; // 最も早く空く窓口のサービス終了時刻
+                    nextWindow = k; // 最も早く空く窓口のインデックス
+                } else{
+                    nextFreeTime = INF; // サービス窓口が空いている場合は無限大にする
+                    nextWindow = k;
+                }
             }
         }
 
@@ -82,7 +87,7 @@ int main(void) {
             // 空いている窓口を探す
             int freeWindow = -1;
             for (int k = 0; k < M; k++) {
-                if (windows[k] <= t) { // 窓口が空いている
+                if (windows[k] == 0.0) { // 窓口が空いている
                     freeWindow = k;
                     break;
                 }
@@ -114,11 +119,18 @@ int main(void) {
         }
     }
 
+    for (int k = 0; k < M; k++) {
+        if(windows[k] != 0.0){
+            N++;
+        }
+    }
+
+
     // 結果を出力
     printf("システム内の客数: %d\n", N);
     printf("帰宅した客の割合: %f\n", dismissed / (double)totalCustomers);
     printf("t : %f\n", t);
-    
+
 
     // 動的配列を解放
     free(arrive);
