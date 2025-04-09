@@ -70,36 +70,39 @@ int main(void) {
         int nextWindow = -1;
         for (int k = 0; k < M; k++) {
             if (windows[k] < nextFreeTime) {
-                nextFreeTime = windows[k]; //最も早く空く窓口のサービス終了時刻
-                nextWindow = k; //最も早く空く窓口のインデックス
+                nextFreeTime = windows[k]; // 最も早く空く窓口のサービス終了時刻
+                nextWindow = k; // 最も早く空く窓口のインデックス
             }
         }
+
 
         if (arrive[i] < nextFreeTime) { // 到着イベント
             t = arrive[i]; // 到着した時間
 
-            int freeWindow = -1; //空いている窓口を探す
-            for(int k = 0 ; k < M ; k++){
-                if(windows[k] == 0.0){ //空いている窓口があればそれをfreeWindowに格納
-                    freeWindow = k; 
+            // 空いている窓口を探す
+            int freeWindow = -1;
+            for (int k = 0; k < M; k++) {
+                if (windows[k] <= t) { // 窓口が空いている
+                    freeWindow = k;
                     break;
                 }
             }
 
-            if (N < MAX_QUEUE) { // 待合室が空いている場合
-                if (freeWindow != -1) { // サービス窓口が空いている場合
-                    windows[freeWindow] = t + service[i]; // サービス終了時刻を更新
-                }else{ //窓口があいてない場合はキューに追加する
-                    queue[queueRear] = service[i]; //サービス時間をキューに追加
+
+            if (freeWindow != -1) { // サービス窓口が空いている場合
+                windows[freeWindow] = t + service[i]; // サービス終了時刻を更新
+            } else { // 窓口が空いていない場合
+                if (N < MAX_QUEUE) { // 待合室が空いている場合
+                    queue[queueRear] = service[i]; // サービス時間をキューに追加
                     queueRear = (queueRear + 1) % MAX_QUEUE; // queueRearを更新
                     N++; // キューの人数を増やす
+                } else { // 待合室が満員の場合
+                    dismissed++; // 帰宅した人数を増やす
                 }
-            } else { // 待合室が満員の場合
-                dismissed++; // 帰宅した人数を増やす
             }
-            i++;
+            i++; // 到着イベントが処理されたので次の客に進む
         } else { // サービス終了イベント
-            t = nextFreeTime;
+            t = nextFreeTime; // サービス終了した時間
 
             if (N > 0) { // 待合室に人がいる場合
                 windows[nextWindow] = t + queue[queueFront]; // サービス終了時刻を更新
@@ -110,8 +113,6 @@ int main(void) {
             }
         }
     }
-
-    
 
     // 結果を出力
     printf("システム内の客数: %d\n", N);
