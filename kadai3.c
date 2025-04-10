@@ -6,6 +6,10 @@
 //サービス時間service[]
 //待合室の人の列queue[]
 //待合室の先頭と末尾のインデックスqueueFront, queueRear
+/*1) システムに入れず退去する客の割合
+2) システム内（サービス窓口+待合室）にいる平均の客数
+3) サービスを受け始めるまでに各客が待合室で待つ平均時間
+（システムに入れず退去する客は考慮しない）*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,6 +27,9 @@ int main(void) {
     int queueFront = 0, queueRear = 0; 
     double t = 0.0;
     int i = 0, N = 0, totalCustomers = 0, dismissed = 0;
+    double systemN = 0; //ある時点でのシステム内の人数の合計
+    double sumN = 0; //システム内の人数の累積和
+    double lastEventTime = 0.0; //最後のイベント時刻
 
     // 窓口の初期化
     for (int k = 0; k < M; k++) {
@@ -84,6 +91,14 @@ int main(void) {
         if (arrive[i] < nextFreeTime) { // 到着イベント
             t = arrive[i]; // 到着した時間
 
+            systemN = N; //システム全体にいる人数を求める
+            for (int k = 0; k < M; k++) {
+                if(windows[k] != 0.0){
+                    systemN++;
+                }
+            }
+            sumN += systemN * (t - lastEventTime); //システム全体にいる人数の累積和
+            lastEventTime = t;
             // 空いている窓口を探す
             int freeWindow = -1;
             for (int k = 0; k < M; k++) {
@@ -109,6 +124,15 @@ int main(void) {
         } else { // サービス終了イベント
             t = nextFreeTime; // サービス終了した時間
 
+            systemN = N; //システム全体にいる人数を求める
+            for (int k = 0; k < M; k++) {
+                if(windows[k] != 0.0){
+                    systemN++;
+                }
+            }
+            sumN += systemN * (t - lastEventTime);
+            lastEventTime = t;
+
             if (N > 0) { // 待合室に人がいる場合
                 windows[nextWindow] = t + queue[queueFront]; // サービス終了時刻を更新
                 queueFront = (queueFront + 1) % MAX_QUEUE; // 待合室の先頭を更新
@@ -125,11 +149,16 @@ int main(void) {
         }
     }
 
+    sumN += N * (t - lastEventTime);
+    double aveN = (double)sumN / t; //システム内の平均人数
+
 
     // 結果を出力
     printf("システム内の客数: %d\n", N);
     printf("帰宅した客の割合: %f\n", dismissed / (double)totalCustomers);
     printf("t : %f\n", t);
+    printf("システム内にいる客数の合計: %f\n", sumN);
+    printf("システム内にいる平均の客数: %f\n", aveN);
 
 
     // 動的配列を解放
